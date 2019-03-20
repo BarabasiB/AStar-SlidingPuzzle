@@ -10,40 +10,71 @@ namespace AStar_SlidingPuzzle
     {
         static void Main(string[] args)
         {
-            int[][] matrix = CreateMatrix();
+            int[,] matrix = CreateMatrix();
             PrintMatrix(matrix);
-            Console.WriteLine(CalculateDistance(matrix));
+            List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => CalculateDistance(x)).ToList();
+            /*foreach (var state in MovesAvailable(matrix))
+            {
+                Console.WriteLine();
+                PrintMatrix(state);
+            }*/
+            FindSolution(matrix, 0);
             Console.ReadKey();
         }
 
-        private static int[][] CreateMatrix()
+        private static bool FindSolution(int[,] matrix, int moves)
         {
-            int[][] matrix = new int[3][];
-            for (int i = 0; i < 3; i++)
+            if (CalculateDistance(matrix) == 0)
             {
-                matrix[i] = new int[3];
+                PrintMatrix(matrix);
+                return true;
             }
+            else
+            {
+                List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => CalculateDistance(x)).ToList();
+                foreach (var state in movesAvailable)
+                {
+                    if (CalculateDistance(state) + moves < moves + 1)
+                    {
+                        if (FindSolution(state, moves + 1))
+                        {
+                            //PrintMatrix(matrix);
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                return false;
+            }
+            
+        }
+
+        private static int[,] CreateMatrix()
+        {
+            int[,] matrix = new int[3,3];
             Console.WriteLine("Enter the starting state in one line with no spaces between the numbers: ");
-            //Console.WriteLine();
             string numbers = Console.ReadLine();
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    matrix[i][j] = int.Parse(numbers.Substring(0,1));
+                    matrix[i,j] = int.Parse(numbers.Substring(0,1));
                     numbers = numbers.Substring(1);
                 }
             }
             return matrix;
         }
 
-        private static void PrintMatrix(int[][] matrix)
+        private static void PrintMatrix(int[,] matrix)
         {
-            foreach (var row in matrix)
+            for (int i = 0; i < 3; i++)
             {
-                foreach (var column in row)
+                for (int j = 0; j < 3; j++)
                 {
-                    Console.Write(column);
+                    Console.Write(matrix[i,j]);
                     Console.Write(" ");
                 }
                 Console.WriteLine();
@@ -63,7 +94,7 @@ namespace AStar_SlidingPuzzle
             }
         }
 
-        private static int CalculateDistance(int[][] matrix)
+        private static int CalculateDistance(int[,] matrix)
         {
             int distance = 0;
             for (int i = 0; i < matrix.Length; i++)
@@ -71,43 +102,43 @@ namespace AStar_SlidingPuzzle
                 switch (i)
                 {
                     case 0:
-                        if (matrix[i][0] != 1)
+                        if (matrix[i,0] != 1)
                         {
                             distance += 1;
                         }
-                        if (matrix[i][1] != 2)
+                        if (matrix[i,1] != 2)
                         {
                             distance += 1;
                         }
-                        if (matrix[i][2] != 3)
+                        if (matrix[i,2] != 3)
                         {
                             distance += 1;
                         }
                         break;
                     case 1:
-                        if (matrix[i][0] != 4)
+                        if (matrix[i,0] != 4)
                         {
                             distance += 1;
                         }
-                        if (matrix[i][1] != 5)
+                        if (matrix[i,1] != 5)
                         {
                             distance += 1;
                         }
-                        if (matrix[i][2] != 6)
+                        if (matrix[i,2] != 6)
                         {
                             distance += 1;
                         }
                         break;
                     case 2:
-                        if (matrix[i][0] != 7)
+                        if (matrix[i,0] != 7)
                         {
                             distance += 1;
                         }
-                        if (matrix[i][1] != 8)
+                        if (matrix[i,1] != 8)
                         {
                             distance += 1;
                         }
-                        if (matrix[i][2] != 0)
+                        if (matrix[i,2] != 0)
                         {
                             distance += 1;
                         }
@@ -117,6 +148,186 @@ namespace AStar_SlidingPuzzle
                 }
             }
             return distance;
+        }
+
+        private static List<int[,]> MovesAvailable(int[,] matrix)
+        {
+            List<int[,]> movesAvailable = new List<int[,]>();
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (matrix[i,j] == 0)
+                    {
+                        if (i == 0)
+                        {
+                            if (j == 0)
+                            {
+                                matrix[i,j] = matrix[i,j + 1];
+                                matrix[i,j + 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j + 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i + 1,j];
+                                matrix[i + 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i + 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                            else if (j == 1)
+                            {
+                                matrix[i,j] = matrix[i,j + 1];
+                                matrix[i,j + 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j + 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i + 1,j];
+                                matrix[i + 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i + 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i,j-1];
+                                matrix[i,j - 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j - 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                            else
+                            {
+                                matrix[i,j] = matrix[i,j - 1];
+                                matrix[i,j - 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j - 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i + 1,j];
+                                matrix[i + 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i + 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                        }
+                        else if (i == 1)
+                        {
+                            if (j == 0)
+                            {
+                                matrix[i,j] = matrix[i,j + 1];
+                                matrix[i,j + 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j + 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i + 1,j];
+                                matrix[i + 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i + 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i - 1,j];
+                                matrix[i - 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i - 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                            else if (j == 1)
+                            {
+                                matrix[i,j] = matrix[i,j - 1];
+                                matrix[i,j - 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j - 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i + 1,j];
+                                matrix[i + 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i + 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i - 1,j];
+                                matrix[i - 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i - 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i,j + 1];
+                                matrix[i,j + 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j + 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                            else
+                            {
+                                matrix[i,j] = matrix[i,j - 1];
+                                matrix[i,j - 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j - 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i + 1,j];
+                                matrix[i + 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i + 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i - 1,j];
+                                matrix[i - 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i - 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                        }
+                        else
+                        {
+                            if (j == 0)
+                            {
+                                matrix[i,j] = matrix[i,j + 1];
+                                matrix[i,j + 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j + 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i - 1,j];
+                                matrix[i - 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i - 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                            else if (j == 1)
+                            {
+                                matrix[i,j] = matrix[i,j + 1];
+                                matrix[i,j + 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j + 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i - 1,j];
+                                matrix[i - 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i - 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i,j - 1];
+                                matrix[i,j - 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j - 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                            else
+                            {
+                                matrix[i,j] = matrix[i,j - 1];
+                                matrix[i,j - 1] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i,j - 1] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                matrix[i,j] = matrix[i - 1,j];
+                                matrix[i - 1,j] = 0;
+                                movesAvailable.Add(matrix.Clone() as int[,]);
+                                matrix[i - 1,j] = matrix[i,j];
+                                matrix[i,j] = 0;
+                                return movesAvailable;
+                            }
+                        }
+                    }
+                }
+            }
+            return movesAvailable;
         }
        
     }
