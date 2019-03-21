@@ -18,15 +18,26 @@ namespace AStar_SlidingPuzzle
                 Console.WriteLine();
                 PrintMatrix(state);
             }*/
-            FindSolution(matrix, 0);
+            List<int[,]> olderStates = new List<int[,]>();
+            olderStates.Add(matrix.Clone() as int[,]);
+            if (IsSolvable(matrix))
+            {
+                FindSolution(matrix, 0, olderStates);
+            }
+            else
+            {
+                Console.WriteLine("Unsolvable startingh state!");
+            }
             Console.ReadKey();
         }
 
-        private static bool FindSolution(int[,] matrix, int moves)
+        private static bool FindSolution(int[,] matrix, int moves, List<int[,]> olderStates)
         {
             if (CalculateDistance(matrix) == 0)
             {
                 PrintMatrix(matrix);
+                Console.WriteLine();
+                Console.WriteLine("Moves made: " + moves);
                 return true;
             }
             else
@@ -34,9 +45,10 @@ namespace AStar_SlidingPuzzle
                 List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => CalculateDistance(x)).ToList();
                 foreach (var state in movesAvailable)
                 {
-                    if (CalculateDistance(state) + moves < moves + 1)
+                    if (StateChecker(olderStates, state))
                     {
-                        if (FindSolution(state, moves + 1))
+                        olderStates.Add(state.Clone() as int[,]);
+                        if (FindSolution(state, moves + 1, olderStates))
                         {
                             //PrintMatrix(matrix);
                             return true;
@@ -50,6 +62,49 @@ namespace AStar_SlidingPuzzle
                 return false;
             }
             
+        }
+
+        private static bool StateChecker(List<int[,]> states, int[,] state)
+        {
+            foreach (var item in states)
+            {
+                if (item.Rank == state.Rank &&
+                    Enumerable.Range(0, item.Rank).All(dimension => item.GetLength(dimension) == state.GetLength(dimension)) &&
+                    item.Cast<int>().SequenceEqual(state.Cast<int>()))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool IsSolvable(int[,] matrix)
+        {
+            int inversions = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int k = i; k < 3; k++)
+                    {
+                        for (int l = j; l < 3; l++)
+                        {
+                            if (matrix[i,j] > matrix[k,l])
+                            {
+                                inversions += 1;
+                            }
+                        }
+                    }
+                }
+            }
+            if (inversions % 2 == 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private static int[,] CreateMatrix()
