@@ -193,10 +193,6 @@ namespace AStar_SlidingPuzzle
                         {
                             distance += 1;
                         }
-                        if (matrix[i,2] != 0)
-                        {
-                            distance += 1;
-                        }
                         break;
                     default:
                         break;
