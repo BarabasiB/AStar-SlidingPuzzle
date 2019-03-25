@@ -21,7 +21,7 @@ namespace AStar_SlidingPuzzle
             olderStates.Add(Tuple.Create<int, int[,]>(HammingDistance(matrix), matrix.Clone() as int[,]));
             if (IsSolvable(matrix))
             {
-                FindSolution(matrix, 0, olderStates);
+                FindSolution(matrix, 1, olderStates);
             }
             else
             {
@@ -38,7 +38,8 @@ namespace AStar_SlidingPuzzle
                 Console.WriteLine("Goal node: ");
                 PrintMatrix(matrix);
                 Console.WriteLine();
-                Console.WriteLine("Nodes visited: " + olderStates.Where(x => HammingDistance(x.Item2) == 0).First().Item1);
+                Console.WriteLine("Nodes visited: " + moves);
+                //olderStates.Where(x => HammingDistance(x.Item2) == 0).First().Item1
                 return true;
             }
             else
