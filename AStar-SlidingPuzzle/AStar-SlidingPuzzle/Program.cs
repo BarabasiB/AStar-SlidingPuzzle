@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,42 +13,44 @@ namespace AStar_SlidingPuzzle
         {
             int[,] matrix = CreateMatrix();
             PrintMatrix(matrix);
-            List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => CalculateDistance(x)).ToList();
+            List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => HammingDistance(x)).ToList();
             /*foreach (var state in MovesAvailable(matrix))
             {
                 Console.WriteLine();
                 PrintMatrix(state);
             }*/
-            List<int[,]> olderStates = new List<int[,]>();
-            olderStates.Add(matrix.Clone() as int[,]);
+            List<Tuple<int,int[,]>> olderStates = new List<Tuple<int,int[,]>>();
+            olderStates.Add(Tuple.Create<int, int[,]>(HammingDistance(matrix), matrix.Clone() as int[,]));
             if (IsSolvable(matrix))
             {
                 FindSolution(matrix, 0, olderStates);
             }
             else
             {
-                Console.WriteLine("Unsolvable startingh state!");
+                Console.WriteLine("Unsolvable starting state!");
             }
             Console.ReadKey();
         }
 
-        private static bool FindSolution(int[,] matrix, int moves, List<int[,]> olderStates)
+        private static bool FindSolution(int[,] matrix, int moves, List<Tuple<int,int[,]>> olderStates)
         {
-            if (CalculateDistance(matrix) == 0)
+            if (HammingDistance(matrix) == 0)
             {
+                Console.WriteLine();
+                Console.WriteLine("Goal node: ");
                 PrintMatrix(matrix);
                 Console.WriteLine();
-                Console.WriteLine("Moves made: " + moves);
+                Console.WriteLine("Nodes visited: " + olderStates.Where(x => HammingDistance(x.Item2) == 0).First().Item1);
                 return true;
             }
             else
             {
-                List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => CalculateDistance(x)).ToList();
+                List<int[,]> movesAvailable = MovesAvailable(matrix).OrderBy(x => HammingDistance(x)).ToList();
                 foreach (var state in movesAvailable)
                 {
-                    if (StateChecker(olderStates, state))
+                    if (IsNewState(olderStates, state))
                     {
-                        olderStates.Add(state.Clone() as int[,]);
+                        olderStates.Add(Tuple.Create<int, int[,]>(moves + HammingDistance(state),state.Clone() as int[,]));
                         if (FindSolution(state, moves + 1, olderStates))
                         {
                             //PrintMatrix(matrix);
@@ -56,7 +59,15 @@ namespace AStar_SlidingPuzzle
                     }
                     else
                     {
-                        continue;
+                        if (olderStates.Where(x => x.Item2 == state).Count() > 0)
+                        {
+                            if (HammingDistance(state) + moves < olderStates.Where(x => x.Item2 == state).First().Item1)
+                            {
+                                olderStates.Remove(olderStates.Where(x => x.Item2 == state).First());
+                                olderStates.Add(Tuple.Create<int, int[,]>(HammingDistance(state) + moves, state.Clone() as int[,]));
+                            }
+                            continue;
+                        }
                     }
                 }
                 return false;
@@ -64,13 +75,13 @@ namespace AStar_SlidingPuzzle
             
         }
 
-        private static bool StateChecker(List<int[,]> states, int[,] state)
+        private static bool IsNewState(List<Tuple<int,int[,]>> states, int[,] state)
         {
             foreach (var item in states)
             {
-                if (item.Rank == state.Rank &&
-                    Enumerable.Range(0, item.Rank).All(dimension => item.GetLength(dimension) == state.GetLength(dimension)) &&
-                    item.Cast<int>().SequenceEqual(state.Cast<int>()))
+                if (item.Item2.Rank == state.Rank &&
+                    Enumerable.Range(0, item.Item2.Rank).All(dimension => item.Item2.GetLength(dimension) == state.GetLength(dimension)) &&
+                    item.Item2.Cast<int>().SequenceEqual(state.Cast<int>()))
                 {
                     return false;
                 }
@@ -110,16 +121,36 @@ namespace AStar_SlidingPuzzle
         private static int[,] CreateMatrix()
         {
             int[,] matrix = new int[3,3];
-            Console.WriteLine("Enter the starting state in one line with no spaces between the numbers: ");
+            Console.WriteLine("Enter the starting state in one line with no spaces between the numbers or a path or \"rand:\" and a number ");
             string numbers = Console.ReadLine();
-            for (int i = 0; i < 3; i++)
+            if (numbers.IndexOf("\\") != -1)
             {
-                for (int j = 0; j < 3; j++)
+                numbers = File.ReadAllText(numbers);
+                for (int i = 0; i < 3; i++)
                 {
-                    matrix[i,j] = int.Parse(numbers.Substring(0,1));
-                    numbers = numbers.Substring(1);
+                    for (int j = 0; j < 3; j++)
+                    {
+                        matrix[i, j] = int.Parse(numbers.Substring(0, 1));
+                        numbers = numbers.Substring(1);
+                    }
                 }
             }
+            else if(numbers.IndexOf("rand") != -1)
+            {
+                matrix = Shuffle(int.Parse(numbers.Substring(numbers.IndexOf(":") + 1)));
+            }
+            else
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        matrix[i, j] = int.Parse(numbers.Substring(0, 1));
+                        numbers = numbers.Substring(1);
+                    }
+                }
+            }
+            
             return matrix;
         }
 
@@ -149,7 +180,12 @@ namespace AStar_SlidingPuzzle
             }
         }
 
-        private static int CalculateDistance(int[,] matrix)
+        private static int ManhattanDistance(int[,] matrix)
+        {
+            return 0;
+        }
+
+        private static int HammingDistance(int[,] matrix)
         {
             int distance = 0;
             for (int i = 0; i < matrix.Length; i++)
@@ -379,6 +415,87 @@ namespace AStar_SlidingPuzzle
                 }
             }
             return movesAvailable;
+        }
+
+        private static int[] FindZero(int[,] matrix)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (matrix[i,j] == 0)
+                    {
+                        return new int[] { i, j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static int[,] Shuffle(int m)
+        {
+            int[,] matrix = new int[,] { { 1,2,3 },
+                                         { 4,5,6 },
+                                         { 7,8,0 } };
+            Random rand = new Random();
+            for (int i = 0; i < m; i++)
+            {
+                int randNumber = rand.Next(0, 12);
+                int[] positions = FindZero(matrix);
+                if (randNumber <= 3)
+                {
+                    if (positions[1] > 0)
+                    {
+                        matrix[positions[0], positions[1]] = matrix[positions[0], positions[1] - 1];
+                        matrix[positions[0], positions[1] - 1] = 0;
+                    }
+                    /*else
+                    {
+                        matrix[positions[0], positions[1]] = matrix[positions[0], 2];
+                        matrix[positions[0], 2] = 0;
+                    }*/
+                }
+                else if (randNumber > 3 && randNumber <= 6)
+                {
+                    if (positions[0] > 0)
+                    {
+                        matrix[positions[0], positions[1]] = matrix[positions[0] - 1, positions[1]];
+                        matrix[positions[0] - 1, positions[1]] = 0;
+                    }
+                    /*else
+                    {
+                        matrix[positions[0], positions[1]] = matrix[2, positions[1]];
+                        matrix[2, positions[1]] = 0;
+                    }*/
+                }
+                else if (randNumber > 6 && randNumber <= 9)
+                {
+                    if (positions[1] < 2)
+                    {
+                        matrix[positions[0], positions[1]] = matrix[positions[0], positions[1] + 1];
+                        matrix[positions[0], positions[1] + 1] = 0;
+                    }
+                    /*else
+                    {
+                        matrix[positions[0], positions[1]] = matrix[positions[0], 0];
+                        matrix[positions[0], 0] = 0;
+                    }*/
+                }
+                else
+                {
+                    if (positions[0] < 2)
+                    {
+                        matrix[positions[0], positions[1]] = matrix[positions[0] + 1, positions[1]];
+                        matrix[positions[0] + 1, positions[1]] = 0;
+                    }
+                    /*else
+                    {
+                        matrix[positions[0], positions[1]] = matrix[0, positions[1]];
+                        matrix[0, positions[1]] = 0;
+                    }*/
+                }
+            }
+            return matrix;
         }
        
     }
