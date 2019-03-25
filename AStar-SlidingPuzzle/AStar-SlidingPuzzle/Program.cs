@@ -53,7 +53,7 @@ namespace AStar_SlidingPuzzle
                         {
                             //PrintMatrix(matrix);
                             return true;
-                        }
+                        };
                     }
                     else
                     {
@@ -64,7 +64,6 @@ namespace AStar_SlidingPuzzle
                                 olderStates.Remove(olderStates.Where(x => x.Item2 == state).First());
                                 olderStates.Add(Tuple.Create<int, int[,]>(HammingDistance(state) + moves, state.Clone() as int[,]));
                             }
-                            continue;
                         }
                     }
                 }

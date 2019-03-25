@@ -1,5 +1,5 @@
 # AStar-SlidingPuzzle
-3x3 Sliding puzzle with AStar algorithm
+3x3 Sliding puzzle with AStar algorithm with two heuristics, only the Hamming distance implemented
 
 How to use:
 1.
